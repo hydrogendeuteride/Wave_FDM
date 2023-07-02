@@ -119,6 +119,8 @@ int main()
     wave.Space(768, 767, 0) = 255;
     wave.Space(768, 769, 0) = 255;
 
+    //camera matrix will be added
+
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
