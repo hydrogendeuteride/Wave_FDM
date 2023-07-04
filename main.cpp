@@ -8,6 +8,12 @@
 #include <vector>
 #include "Wave_FDM_Solver.h"
 
+glm::vec3 CamPos = glm::vec3 (0.0f, 0.0f, 2.0f);
+glm::vec3 CamFront = glm::vec3 (0.0f, 0.0f, -1.0f);
+glm::vec3 CamUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float fov = 60.0;
+
 constexpr unsigned int SCR_WIDTH = 1920, SCR_HEIGHT = 1080;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
@@ -19,6 +25,25 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    float cameraspeed = 0.05f;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        CamPos += cameraspeed * CamUp;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        CamPos -= cameraspeed * CamUp;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        CamPos -= glm::normalize(glm::cross(CamFront, CamUp)) * cameraspeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        CamPos += glm::normalize(glm::cross(CamFront, CamUp)) * cameraspeed;
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+{
+    fov -= (float)yoffset;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 60.0f)
+        fov = 60.0f;
 }
 
 template <typename T>
@@ -45,6 +70,7 @@ int main()
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
     {
@@ -119,8 +145,6 @@ int main()
     wave.Space(768, 767, 0) = 255;
     wave.Space(768, 769, 0) = 255;
 
-    //camera matrix will be added
-
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -128,8 +152,16 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glm::mat4 projection = glm::perspective(glm::radians(fov), (float )SCR_WIDTH / (float )SCR_HEIGHT, 0.1f, 100.0f);
+        shader.setMat4("projection", projection);
+
+        glm::mat4 view = glm::lookAt(CamPos, CamPos + CamFront, CamUp);
+        shader.setMat4("view", view);
+
         auto initial = wave.Update_Fast(1.0);
 
+        glm::mat4 model = glm::mat4 (1.0f);
+        shader.setMat4("model", model);
         for (int i = height- 1; i >= 0; --i)
         {
             for (int j = 0; j < width; ++j)
