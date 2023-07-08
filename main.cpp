@@ -14,7 +14,7 @@ glm::vec3 CamUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float fov = 60.0;
 
-constexpr unsigned int SCR_WIDTH = 1920, SCR_HEIGHT = 1080;
+constexpr unsigned int SCR_WIDTH = 1920, SCR_HEIGHT = 1200;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -59,7 +59,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Wave FDM", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Wave FDM", glfwGetPrimaryMonitor(), nullptr);
 
     if (window == nullptr)
     {
@@ -132,18 +132,9 @@ int main()
 
     Shader shader("../shader.vert", "../shader.frag");
 
-    //wave.Random_Source(255.0);
-    wave.Space(512, 512, 0) = 255;
-    wave.Space(513, 512, 0) = 255;
-    wave.Space(511, 512, 0) = 255;
-    wave.Space(512, 513, 0) = 255;
-    wave.Space(512, 511, 0) = 255;
-
-    wave.Space(768, 768, 0) = 255;
-    wave.Space(767, 768, 0) = 255;
-    wave.Space(769, 768, 0) = 255;
-    wave.Space(768, 767, 0) = 255;
-    wave.Space(768, 769, 0) = 255;
+    double LastTime = glfwGetTime();
+    double interval = 2.0;
+    int FPS;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -157,6 +148,17 @@ int main()
 
         glm::mat4 view = glm::lookAt(CamPos, CamPos + CamFront, CamUp);
         shader.setMat4("view", view);
+
+        FPS++;
+
+        double CurrentTime = glfwGetTime();
+        if ((CurrentTime - LastTime) >= interval)
+        {
+            wave.Random_Source(255.0);
+            LastTime = CurrentTime;
+            std::cout << static_cast<double>(FPS) / interval << "\n";
+            FPS = 0;
+        }
 
         auto initial = wave.Update_Fast(1.0);
 
@@ -174,8 +176,6 @@ int main()
                         clip(initial(j, i, 2) * 4.0 + 0.0, 0.0, 255.0))));
             }
         }
-
-        data[(512 * 1024 + 512) * 3] = 255;
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 

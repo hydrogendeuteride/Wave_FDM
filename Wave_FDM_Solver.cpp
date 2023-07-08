@@ -71,7 +71,14 @@ void Wave_FDM::Random_Source(double Source_Height)
 
     std::mt19937_64 gen(rd());
 
-    std::uniform_int_distribution<int> x(0, Num_Grid -1);
+    std::uniform_int_distribution<int> x(1, Num_Grid - 2);
 
-    Space(x(gen), x(gen), 0) = Source_Height;
+    int pos_x = x(gen);
+    int pos_y = x(gen);
+
+    Space(pos_x, pos_y, 0) = Source_Height;
+    Space(pos_x - 1, pos_y, 0) = Source_Height;
+    Space(pos_x + 1, pos_y, 0) = Source_Height;
+    Space(pos_x, pos_y - 1, 0) = Source_Height;
+    Space(pos_x, pos_y + 1, 0) = Source_Height;
 }
